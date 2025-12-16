@@ -10,7 +10,6 @@ function FieldToolbar({
   onUpdateField,
   onDeleteField,
 }) {
-  const [expandedFieldId, setExpandedFieldId] = useState(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const selectedField = fields.find(f => f.id === selectedFieldId);
 

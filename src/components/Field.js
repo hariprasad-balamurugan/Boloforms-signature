@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './Field.css';
 
 function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pageWidth, pageHeight }) {
@@ -15,8 +15,6 @@ function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pa
     onSelect();
     setIsDragging(true);
     const fieldRect = fieldRef.current.getBoundingClientRect();
-    const canvasContainer = fieldRef.current.closest('.fields-overlay');
-    const containerRect = canvasContainer.getBoundingClientRect();
     
     setDragOffset({
       x: e.clientX - fieldRect.left,
@@ -24,7 +22,7 @@ function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pa
     });
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (isDragging && fieldRef.current) {
       
       const canvasContainer = fieldRef.current.closest('.fields-overlay');
@@ -66,12 +64,12 @@ function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pa
 
       setResizeStart({ x: e.clientX, y: e.clientY });
     }
-  };
+  }, [isDragging, isResizing, dragOffset, resizeStart, field, onUpdate]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setIsResizing(false);
-  };
+  }, []);
 
   const handleResizeStart = (e) => {
     e.preventDefault();
@@ -90,7 +88,7 @@ function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pa
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, field, dragOffset, resizeStart, scale,handleMouseMove, handleMouseUp ]);
+  }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
 
   const getFieldLabel = () => {
     const labels = {

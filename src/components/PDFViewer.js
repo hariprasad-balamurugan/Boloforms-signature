@@ -8,12 +8,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 function PDFViewer({ pdfId, fields, selectedFieldId, onUpdateField, onSelectField, onPageViewportChange }) {
   const [pdfDoc, setPdfDoc] = useState(null);
   const [pageNum, setPageNum] = useState(1);
-  const [scale, setScale] = useState(1);
   const canvasRef = useRef();
   const containerRef = useRef();
   const renderTaskRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [pageViewport, setPageViewport] = useState(null);
   const [pageWidth, setPageWidth] = useState(612);
   const [pageHeight, setPageHeight] = useState(792);
 
@@ -61,7 +58,6 @@ function PDFViewer({ pdfId, fields, selectedFieldId, onUpdateField, onSelectFiel
           clientWidth: canvas.clientWidth,
           clientHeight: canvas.clientHeight,
         };
-        setPageViewport(viewportData);
         if (onPageViewportChange) {
           onPageViewportChange(viewportData);
         }
@@ -74,7 +70,6 @@ function PDFViewer({ pdfId, fields, selectedFieldId, onUpdateField, onSelectFiel
         renderTaskRef.current = renderTask;
         await renderTask.promise;
         renderTaskRef.current = null;
-        setScale(fixedScale);
       } catch (error) {
         if (error.name !== 'RenderingCancelledException') {
           console.error('Render error:', error);
@@ -89,11 +84,7 @@ function PDFViewer({ pdfId, fields, selectedFieldId, onUpdateField, onSelectFiel
         renderTaskRef.current.cancel();
       }
     };
-  }, [pdfDoc, pageNum]);
-
-  const handleFieldDragStart = (e, fieldId) => {
-    e.stopPropagation();
-  };
+  }, [pdfDoc, pageNum, onPageViewportChange]);
 
   const handleFieldDragEnd = (e, fieldId, newCoordinates) => {
     const field = fields.find(f => f.id === fieldId);
