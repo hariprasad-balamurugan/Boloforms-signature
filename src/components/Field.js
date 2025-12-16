@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './Field.css';
 
 function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pageWidth, pageHeight }) {
@@ -81,7 +81,7 @@ function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pa
     setResizeStart({ x: e.clientX, y: e.clientY });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -90,7 +90,7 @@ function Field({ field, isSelected, onSelect, onDragEnd, onUpdate, scale = 1, pa
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, field, dragOffset, resizeStart, scale]);
+  }, [isDragging, isResizing, field, dragOffset, resizeStart, scale,handleMouseMove, handleMouseUp ]);
 
   const getFieldLabel = () => {
     const labels = {
