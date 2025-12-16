@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import PDFViewer from './components/PDFViewer';
 import FieldToolbar from './components/FieldToolbar';
+import apiService from './services/advancedApiService';
 import './App.css';
-import { API_ENDPOINTS } from './config/api';
 
 function App() {
   const [pdfId, setPdfId] = useState(null);
@@ -13,38 +13,30 @@ function App() {
   const fileInputRef = useRef();
 
   const handlePdfUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  setIsLoading(true);
-  const formData = new FormData();
-  formData.append('pdf', file);
+    setIsLoading(true);
+    const formData = new FormData();
+    formData.append('pdf', file);
 
-  try {
-    const response = await fetch(API_ENDPOINTS.UPLOAD_PDF, {
-      method: 'POST',
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+      const data = await apiService.uploadPdf(formData);
+      
+      if (data.success) {
+        setPdfId(data.pdfId);
+        setFields([]);
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(`Failed to upload PDF: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      setPdfId(data.pdfId);
-      setFields([]);
-    } else {
-      throw new Error(data.message || 'Upload failed');
-    }
-  } catch (error) {
-    console.error('Upload error:', error);
-    alert(`Failed to upload PDF: ${error.message}`);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
+
   const handleAddField = (fieldType) => {
     const newField = {
       id: Date.now(),
@@ -76,7 +68,6 @@ function App() {
 
   const handleSign = async () => {
     if (!pdfId || fields.length === 0) {
-      // alert('Please upload a PDF and add at least one field');
       return;
     }
 
@@ -89,30 +80,17 @@ function App() {
         metadata: f.metadata,
       }));
 
+      const data = await apiService.signPdf(pdfId, fieldsToSign, pageViewport);
       
-      const response = await fetch('http://localhost:5000/api/signatures/sign-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pdfId,
-          fields: fieldsToSign,
-          pageViewport,
-        }),
-      });
-
-      const data = await response.json();
       if (data.success) {
-        // alert('PDF signed successfully!');
-        const signedUrl = `http://localhost:5000${data.signedPdfUrl}`;
+        const signedUrl = apiService.getSignedPdfUrl(data.signedPdfUrl);
         window.open(signedUrl, '_blank');
       } else {
         alert('Failed to sign PDF: ' + data.error);
       }
     } catch (error) {
       console.error('Sign error:', error);
-      alert('Failed to sign PDF');
+      alert('Failed to sign PDF: ' + error.message);
     } finally {
       setIsLoading(false);
     }
