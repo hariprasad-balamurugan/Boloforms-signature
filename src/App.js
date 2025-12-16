@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import PDFViewer from './components/PDFViewer';
 import FieldToolbar from './components/FieldToolbar';
 import './App.css';
+import { API_ENDPOINTS } from './config/api';
 
 function App() {
   const [pdfId, setPdfId] = useState(null);
@@ -12,31 +13,38 @@ function App() {
   const fileInputRef = useRef();
 
   const handlePdfUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-    setIsLoading(true);
-    const formData = new FormData();
-    formData.append('pdf', file);
+  setIsLoading(true);
+  const formData = new FormData();
+  formData.append('pdf', file);
 
-    try {
-      const response = await fetch('http://localhost:5000/api/pdfs/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      if (data.success) {
-        setPdfId(data.pdfId);
-        setFields([]);
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload PDF');
-    } finally {
-      setIsLoading(false);
+  try {
+    const response = await fetch(API_ENDPOINTS.UPLOAD_PDF, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
-
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      setPdfId(data.pdfId);
+      setFields([]);
+    } else {
+      throw new Error(data.message || 'Upload failed');
+    }
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert(`Failed to upload PDF: ${error.message}`);
+  } finally {
+    setIsLoading(false);
+  }
+};
   const handleAddField = (fieldType) => {
     const newField = {
       id: Date.now(),
